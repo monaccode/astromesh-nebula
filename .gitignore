@@ -4,9 +4,14 @@ __pycache__/
 .env
 /data/*/raw/
 /data/*/processed/
+# generated dataset artifacts (the recipe is in code; data is derived)
+/data/*/*.jsonl
+/data/*/labels.json
+/data/*/stats.json
 /checkpoints/
 /export/
 *.gguf
 *.safetensors
 .pytest_cache/
 .ruff_cache/
+pytest_output.txt
