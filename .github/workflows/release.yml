@@ -1,0 +1,47 @@
+name: release
+# Manual only — launches the GPU pipeline on Hugging Face Jobs (billed compute).
+# GitHub runners have no GPU, so this job only authenticates to HF and submits the Job.
+on:
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: "HF Jobs GPU flavor"
+        default: "a10g-large"
+      tag:
+        description: "Release tag for the HF model repo"
+        default: "v0.1"
+      ref:
+        description: "Git ref (branch or SHA) to build from"
+        default: "develop"
+
+jobs:
+  train-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install Hugging Face CLI
+        run: uv tool install "huggingface_hub[cli]"
+      - name: Authenticate to Hugging Face
+        run: hf auth login --token "${{ secrets.HF_TOKEN }}"
+      - name: Launch end-to-end pipeline on HF Jobs (GPU)
+        env:
+          HF_ORG: ${{ vars.HF_ORG }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          GH_PIPELINE_TOKEN: ${{ secrets.GH_PIPELINE_TOKEN }}
+          INPUT_FLAVOR: ${{ inputs.flavor }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_REF: ${{ inputs.ref }}
+        # NOTE: confirm the exact `hf jobs run` flags against `hf jobs run --help`
+        # on first use (the CLI evolves). This launches a python:3.11 job that clones
+        # the private repo with GH_PIPELINE_TOKEN and runs scripts/run_pipeline.sh.
+        run: |
+          hf jobs run \
+            --flavor "$INPUT_FLAVOR" \
+            -s HF_TOKEN="$HF_TOKEN" \
+            -s GH_PIPELINE_TOKEN="$GH_PIPELINE_TOKEN" \
+            -e HF_ORG="$HF_ORG" \
+            -e TAG="$INPUT_TAG" \
+            -e REPO_REF="$INPUT_REF" \
+            python:3.11 \
+            bash -c 'git clone --branch "$REPO_REF" "https://x-access-token:$GH_PIPELINE_TOKEN@github.com/fulfarodev/astromesh-nebula.git" repo && cd repo && bash scripts/run_pipeline.sh'

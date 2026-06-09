@@ -16,3 +16,16 @@ layer. Runs cheap, self-hosted, even on CPU via GGUF.
 ```bash
 ollama run hf.co/astromesh/Centinela-Qwen3-4B:Q4_K_M
 ```
+
+## CI / release (GitHub Actions)
+- **eval-gate** runs ruff + pytest on every push/PR (CPU).
+- **release** is manual (`workflow_dispatch`): it authenticates to Hugging Face and launches
+  the full GPU pipeline (build → train → merge → quantize → eval-gate → publish) as a single
+  **HF Job**. GitHub runners have no GPU, so the GPU work runs on HF (billed; needs a PRO/Team plan).
+
+Required repo configuration:
+| Name | Kind | Value / scope |
+|------|------|---------------|
+| `HF_ORG` | Variable | `astromesh` |
+| `HF_TOKEN` | Secret | HF fine-grained token: write + create-repo on the `astromesh` org |
+| `GH_PIPELINE_TOKEN` | Secret | GitHub fine-grained PAT, read-only `contents` on this repo (so the HF Job can clone it) |
