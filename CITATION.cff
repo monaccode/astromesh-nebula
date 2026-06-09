@@ -1,0 +1,7 @@
+cff-version: 1.2.0
+title: "Centinela-4B (Astromesh Nebula)"
+message: "If you use this model, please cite it."
+authors:
+  - name: "Astromesh"
+version: "0.1.0"
+license: Apache-2.0

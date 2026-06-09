@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+Makefile text eol=lf
+*.png binary
+*.gguf binary
+*.safetensors binary
