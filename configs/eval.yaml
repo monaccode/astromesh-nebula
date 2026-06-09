@@ -1,0 +1,6 @@
+task: sentiment_analysis
+labels: [positivo, neutral, negativo]
+eval_path: data/centinela/eval.jsonl
+thresholds:
+  macro_f1: 0.85       # initial target; tune after baselines are measured
+  must_beat_base: true # Centinela-4B must strictly beat base Qwen3-4B few-shot

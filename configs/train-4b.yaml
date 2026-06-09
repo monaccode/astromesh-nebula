@@ -1,0 +1,16 @@
+base_model: Qwen/Qwen3-4B
+output_repo: Centinela-Qwen3-4B      # joined with HF_ORG at publish time
+train_path: data/centinela/train.jsonl
+max_seq_length: 1024
+lora:
+  r: 16
+  alpha: 16
+  dropout: 0.0
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+train:
+  epochs: 2
+  learning_rate: 0.0002
+  per_device_batch_size: 8
+  gradient_accumulation_steps: 2
+  gradient_checkpointing: true
+  seed: 42
