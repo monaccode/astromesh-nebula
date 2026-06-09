@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Local training)
+- `scripts/02_train_local.py` — local QLoRA fine-tune path (standard transformers + PEFT + bitsandbytes + TRL, no Unsloth) for running on a local NVIDIA GPU via WSL2 when HF Jobs (cloud GPU) is unavailable. fp16 on Turing (no bf16), `paged_adamw_8bit`, `--max-train-samples`/`--epochs`/`--max-steps` flags, and intermediate checkpointing. Unsloth is avoided because its 2026.6.x build globally patches TRL and is incompatible with TRL 0.24 (injects an out-of-vocab `<EOS_TOKEN>` sentinel).
+- `scripts/wsl_train_*.sh` — reproducible WSL2 setup/deps/smoke/full runners for the local GPU pipeline.
+
+### Changed
+- `configs/train-4b.yaml` batch sizing tuned for a 12GB GPU (per-device 2 × grad-accum 8; effective batch 16 unchanged).
+- `scripts/02_train.py` (HF Jobs / Unsloth path) updated for TRL 0.24 (`max_length`, `processing_class`) and auto bf16/fp16 by GPU capability.
+
 ### Added (CI / Pipeline)
 - `release.yml` gains a `stop_before_publish` dispatch input and `run_pipeline.sh` honors `STOP_BEFORE_PUBLISH=true` to run train → merge → quantize → eval as a **dry run** that prints the eval report to the job logs and skips the public Hub publish. Lets the first real GPU run be validated before committing a public `v0.1`.
 

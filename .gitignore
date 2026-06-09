@@ -1,7 +1,11 @@
 __pycache__/
 *.pyc
 .venv/
+.venv-wsl/
 .env
+# local WSL training scratch
+unsloth_compiled_cache/
+*.err
 /data/*/raw/
 /data/*/processed/
 # generated dataset artifacts (the recipe is in code; data is derived)
