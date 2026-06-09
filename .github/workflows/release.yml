@@ -43,5 +43,6 @@ jobs:
             -e HF_ORG="$HF_ORG" \
             -e TAG="$INPUT_TAG" \
             -e REPO_REF="$INPUT_REF" \
+            -e REPO_SLUG="${{ github.repository }}" \
             python:3.11 \
-            bash -c 'git clone --branch "$REPO_REF" "https://x-access-token:$GH_PIPELINE_TOKEN@github.com/fulfarodev/astromesh-nebula.git" repo && cd repo && bash scripts/run_pipeline.sh'
+            bash -c 'git clone --branch "$REPO_REF" "https://x-access-token:$GH_PIPELINE_TOKEN@github.com/$REPO_SLUG.git" repo && cd repo && bash scripts/run_pipeline.sh'
