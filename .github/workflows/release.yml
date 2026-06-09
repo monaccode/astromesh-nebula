@@ -13,6 +13,9 @@ on:
       ref:
         description: "Git ref (branch or SHA) to build from"
         default: "develop"
+      timeout:
+        description: "Max Job duration (e.g. 2h) — give training headroom"
+        default: "2h"
 
 jobs:
   train-and-publish:
@@ -32,12 +35,15 @@ jobs:
           INPUT_FLAVOR: ${{ inputs.flavor }}
           INPUT_TAG: ${{ inputs.tag }}
           INPUT_REF: ${{ inputs.ref }}
-        # NOTE: confirm the exact `hf jobs run` flags against `hf jobs run --help`
+          INPUT_TIMEOUT: ${{ inputs.timeout }}
+        # Flags verified against `hf jobs run --help` (huggingface_hub 1.14.0).
+        # Runs attached (no --detach) so this step waits and fails if the eval gate fails.
         # on first use (the CLI evolves). This launches a python:3.11 job that clones
         # the private repo with GH_PIPELINE_TOKEN and runs scripts/run_pipeline.sh.
         run: |
           hf jobs run \
             --flavor "$INPUT_FLAVOR" \
+            --timeout "$INPUT_TIMEOUT" \
             -s HF_TOKEN="$HF_TOKEN" \
             -s GH_PIPELINE_TOKEN="$GH_PIPELINE_TOKEN" \
             -e HF_ORG="$HF_ORG" \
