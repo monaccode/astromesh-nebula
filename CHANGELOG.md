@@ -1,0 +1,45 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [v0.1.0] - 2026-06-09
+
+First slice of **Astromesh Nebula**, the open-model foundry of the Astromesh ecosystem.
+This release scaffolds the foundry and its first model family, **Centinela**, with a complete,
+locally-verifiable MLOps pipeline for `Centinela-Qwen3-4B` — a Spanish-first financial
+**sentiment** classifier (`positivo` / `neutral` / `negativo`). GPU training, quantization, and
+Hugging Face publishing are wired and tested with dependency-injected fakes; the cloud runs
+(HF Jobs + Hub release) are deferred until the `astromesh` HF org and write token exist.
+
+### Added (Library — `nebula/`)
+- `labels` — closed 3-class label set and the Spanish system prompt used identically at train and inference time (no train/serve skew).
+- `validation.constrain_label` — deterministic output-constraining: maps raw model text to a valid label or `None` (the non-negotiable "model never free-forms structured output" rule, classification flavor).
+- `metrics` — `accuracy`, `macro_f1`, and `classification_summary` with invalid-rate tracking; `None` predictions count as wrong.
+- `data` — `row_to_chat_record` (filters to `sentiment_analysis`, maps EN→ES labels, builds chat records) and `stratified_split` (deterministic, per-label, leakage-free).
+- `evaluate` — `Classifier` Protocol, `load_examples`, and `evaluate_classifier` (pipes predictions through `constrain_label`).
+- `modelcard.render_model_card` — renders the Hugging Face model card with YAML front-matter and an injected eval table.
+- `config` — `load_eval_config` / `load_train_config` (YAML, `safe_load`).
+- `hf_classifier.HFChatClassifier` — transformers-backed classifier (lazy import) satisfying the `Classifier` Protocol.
+
+### Added (Pipeline — `scripts/`)
+- `01_build_dataset.py` — pull NickyNicky source, filter to Spanish sentiment rows, dedup, stratified split, write chat JSONL + `labels.json` + dataset card.
+- `02_train.py` — QLoRA fine-tune of `Qwen/Qwen3-4B` (Unsloth + TRL); PEP 723 UV script for `hf jobs uv run`.
+- `03_merge.py` — merge the LoRA adapter into bf16 safetensors.
+- `04_quantize.sh` — GGUF `Q4_K_M` quantization via llama.cpp.
+- `05_evaluate.py` — base vs Centinela-4B comparison with a CI-friendly tier gate (macro-F1 ≥ threshold and must-beat-base).
+- `06_push_to_hub.py` — publish model artifacts + model card + version tag (dependency-injected `HfApi`).
+- `07_publish_dataset.py` — publish the processed Spanish split + dataset card (public source, no PII).
+- `08_deploy_space.py` — create/update the public Gradio demo Space.
+
+### Added (Project)
+- Gradio demo (`demo/`) that loads the published GGUF on CPU and constrains output to the label set.
+- `Makefile` pipeline targets (`dataset`, `train`, `eval`, `quantize`, `merge`, `publish`, `space`, `test`, `lint`).
+- CI: `eval-gate` (ruff + pytest on every PR/push) and `publish` (on `v*` tags).
+- OSS governance: Apache-2.0 `LICENSE`, `NOTICE` (Qwen + dataset attribution), `CONTRIBUTING`, `CODE_OF_CONDUCT`, `SECURITY`, `CITATION.cff`, issue/PR templates.
+- `.gitattributes` enforcing LF line endings for `*.sh` / `*.py` / `Makefile`.
+- 36 unit tests (pure-logic library + script smoke/mock tests); verified end-to-end on the real 43,830-row source dataset (38,942 deduped examples, 0 train/eval leakage).
