@@ -36,6 +36,6 @@ def test_build_split_files_writes_jsonl_and_labels(tmp_path):
     rec = json.loads(train_lines[0])
     assert rec["messages"][0]["role"] == "system"
     # no leakage between splits
-    train_texts = {json.loads(l)["messages"][1]["content"] for l in train_lines}
-    eval_texts = {json.loads(l)["messages"][1]["content"] for l in eval_lines}
+    train_texts = {json.loads(line)["messages"][1]["content"] for line in train_lines}
+    eval_texts = {json.loads(line)["messages"][1]["content"] for line in eval_lines}
     assert train_texts.isdisjoint(eval_texts)
