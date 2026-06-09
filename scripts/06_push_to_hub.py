@@ -50,6 +50,9 @@ def publish(
         config_path="configs/train-4b.yaml",
         commit=commit,
     )
+    card_dir = os.path.dirname(card_out)
+    if card_dir:
+        os.makedirs(card_dir, exist_ok=True)
     with open(card_out, "w", encoding="utf-8") as fh:
         fh.write(card)
     api.upload_file(repo_id=repo_id, path_or_fileobj=card_out, path_in_repo="README.md")

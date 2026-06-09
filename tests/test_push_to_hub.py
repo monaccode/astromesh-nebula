@@ -35,7 +35,7 @@ def test_publish_creates_repo_uploads_and_tags(tmp_path):
     results.write_text("| macro-F1 | 0.61 | 0.88 |", encoding="utf-8")
 
     api = FakeApi()
-    card_path = tmp_path / "card.md"
+    card_path = tmp_path / "model_card" / "card.md"   # nested dir does not exist yet
     push_to_hub.publish(
         api=api,
         repo_id="astromesh/Centinela-Qwen3-4B",

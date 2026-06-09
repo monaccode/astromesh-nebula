@@ -53,7 +53,9 @@ def main() -> None:
     tuned_res = evaluate_classifier(HFChatClassifier(args.tuned), examples, LABELS)
 
     table = format_results_table(base_res, tuned_res)
-    os.makedirs(os.path.dirname(args.out), exist_ok=True)
+    out_dir = os.path.dirname(args.out)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as fh:
         fh.write("# Centinela-4B evaluation\n\n" + table + "\n")
 
