@@ -16,6 +16,9 @@ on:
       timeout:
         description: "Max Job duration (e.g. 2h) — give training headroom"
         default: "2h"
+      stop_before_publish:
+        description: "Dry run: train + eval but DO NOT publish (true/false)"
+        default: "false"
 
 jobs:
   train-and-publish:
@@ -36,6 +39,7 @@ jobs:
           INPUT_TAG: ${{ inputs.tag }}
           INPUT_REF: ${{ inputs.ref }}
           INPUT_TIMEOUT: ${{ inputs.timeout }}
+          INPUT_STOP_BEFORE_PUBLISH: ${{ inputs.stop_before_publish }}
         # Flags verified against `hf jobs run --help` (huggingface_hub 1.14.0).
         # Runs attached (no --detach) so this step waits and fails if the eval gate fails.
         # on first use (the CLI evolves). This launches a python:3.11 job that clones
@@ -50,5 +54,6 @@ jobs:
             -e TAG="$INPUT_TAG" \
             -e REPO_REF="$INPUT_REF" \
             -e REPO_SLUG="${{ github.repository }}" \
+            -e STOP_BEFORE_PUBLISH="$INPUT_STOP_BEFORE_PUBLISH" \
             python:3.11 \
             bash -c 'git clone --branch "$REPO_REF" "https://x-access-token:$GH_PIPELINE_TOKEN@github.com/$REPO_SLUG.git" repo && cd repo && bash scripts/run_pipeline.sh'

@@ -24,6 +24,15 @@ bash scripts/04_quantize.sh export/merged "export/centinela-${SIZE}.Q4_K_M.gguf"
 # 5) Evaluate + tier gate (non-zero exit aborts before publish)
 uv run python scripts/05_evaluate.py --base Qwen/Qwen3-4B --tuned export/merged --eval data/centinela/eval.jsonl --out eval/results/results.md
 
+# Dry run: stop after eval without publishing. The eval table above is already in the
+# job logs; echo the report file too so the full results survive the ephemeral job.
+if [ "${STOP_BEFORE_PUBLISH:-false}" = "true" ]; then
+  echo "=== STOP_BEFORE_PUBLISH=true — dry run complete, skipping publish ==="
+  echo "--- eval/results/results.md ---"
+  cat eval/results/results.md
+  exit 0
+fi
+
 # 6) Publish model (artifacts + card + tag; metadata auto-resolved from stats.json + git)
 uv run python scripts/06_push_to_hub.py \
   --size "$SIZE" --tag "$TAG" \

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (CI / Pipeline)
+- `release.yml` gains a `stop_before_publish` dispatch input and `run_pipeline.sh` honors `STOP_BEFORE_PUBLISH=true` to run train → merge → quantize → eval as a **dry run** that prints the eval report to the job logs and skips the public Hub publish. Lets the first real GPU run be validated before committing a public `v0.1`.
+
 ## [v0.1.0] - 2026-06-09
 
 First slice of **Astromesh Nebula**, the open-model foundry of the Astromesh ecosystem.
