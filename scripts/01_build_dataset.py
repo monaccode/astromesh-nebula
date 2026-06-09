@@ -35,12 +35,15 @@ def build_split_files(rows, out_dir: str, eval_frac: float, seed: int) -> dict:
         json.dump(LABELS, fh, ensure_ascii=False)
 
     digest = _hash_records(train + eval_set)
-    return {
+    stats = {
         "n_train": len(train),
         "n_eval": len(eval_set),
         "dataset_hash": digest,
         "label_counts": _label_counts(deduped),
     }
+    with open(os.path.join(out_dir, "stats.json"), "w", encoding="utf-8") as fh:
+        json.dump(stats, fh, ensure_ascii=False, indent=2)
+    return stats
 
 
 def _write_jsonl(path: str, records: list[dict]) -> None:

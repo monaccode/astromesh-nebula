@@ -39,3 +39,5 @@ def test_build_split_files_writes_jsonl_and_labels(tmp_path):
     train_texts = {json.loads(line)["messages"][1]["content"] for line in train_lines}
     eval_texts = {json.loads(line)["messages"][1]["content"] for line in eval_lines}
     assert train_texts.isdisjoint(eval_texts)
+    stats_on_disk = json.loads((out_dir / "stats.json").read_text(encoding="utf-8"))
+    assert stats_on_disk == stats

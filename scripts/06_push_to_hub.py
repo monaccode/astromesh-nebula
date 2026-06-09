@@ -4,9 +4,16 @@
 """
 
 import argparse
+import json
 import os
+import subprocess
 
 from nebula.modelcard import render_model_card
+
+
+def load_stats(path: str) -> dict:
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def publish(
@@ -67,11 +74,24 @@ def main() -> None:
     ap.add_argument("--adapter", default="export/adapter")
     ap.add_argument("--gguf", default="export/centinela-4b.Q4_K_M.gguf")
     ap.add_argument("--eval-table", default="eval/results/results.md")
-    ap.add_argument("--dataset-hash", required=True)
-    ap.add_argument("--commit", required=True)
-    ap.add_argument("--n-train", type=int, required=True)
-    ap.add_argument("--n-eval", type=int, required=True)
+    ap.add_argument("--dataset-hash", default=None)
+    ap.add_argument("--commit", default=None)
+    ap.add_argument("--n-train", type=int, default=None)
+    ap.add_argument("--n-eval", type=int, default=None)
+    ap.add_argument("--stats", default="data/centinela/stats.json")
     args = ap.parse_args()
+
+    if args.dataset_hash is None or args.n_train is None or args.n_eval is None:
+        stats = load_stats(args.stats)
+        dataset_hash = args.dataset_hash or stats["dataset_hash"]
+        n_train = args.n_train if args.n_train is not None else stats["n_train"]
+        n_eval = args.n_eval if args.n_eval is not None else stats["n_eval"]
+    else:
+        dataset_hash, n_train, n_eval = args.dataset_hash, args.n_train, args.n_eval
+
+    commit = args.commit or subprocess.check_output(
+        ["git", "rev-parse", "--short", "HEAD"], text=True
+    ).strip()
 
     from huggingface_hub import HfApi
 
@@ -91,10 +111,10 @@ def main() -> None:
         tag=args.tag,
         base_model="Qwen/Qwen3-4B",
         dataset_id=dataset_id,
-        n_train=args.n_train,
-        n_eval=args.n_eval,
-        dataset_hash=args.dataset_hash,
-        commit=args.commit,
+        n_train=n_train,
+        n_eval=n_eval,
+        dataset_hash=dataset_hash,
+        commit=commit,
     )
     print(f"published {org}/Centinela-Qwen3-{args.size.upper()} @ {args.tag}")
 

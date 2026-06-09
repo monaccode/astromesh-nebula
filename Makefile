@@ -27,8 +27,7 @@ eval:
 		--eval data/centinela/eval.jsonl --out eval/results/results.md
 
 publish:
-	uv run python scripts/06_push_to_hub.py --size $(SIZE) --tag $(TAG) --gguf export/centinela-$(SIZE).Q4_K_M.gguf \
-		--dataset-hash $(DATASET_HASH) --commit $(COMMIT) --n-train $(N_TRAIN) --n-eval $(N_EVAL)
+	uv run python scripts/06_push_to_hub.py --size $(SIZE) --tag $(TAG) --gguf export/centinela-$(SIZE).Q4_K_M.gguf
 
 space:
 	uv run python scripts/08_deploy_space.py --repo $(HF_ORG)/centinela-$(SIZE)-demo

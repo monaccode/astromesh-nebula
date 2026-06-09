@@ -62,3 +62,13 @@ def test_publish_creates_repo_uploads_and_tags(tmp_path):
     card = card_path.read_text(encoding="utf-8")
     assert "license: apache-2.0" in card
     assert "0.88" in card
+
+
+def test_load_stats_reads_dataset_metadata(tmp_path):
+    import json as _json
+
+    p = tmp_path / "stats.json"
+    p.write_text(_json.dumps({"n_train": 100, "n_eval": 25, "dataset_hash": "abc123"}), encoding="utf-8")
+    stats = push_to_hub.load_stats(str(p))
+    assert stats["n_train"] == 100
+    assert stats["dataset_hash"] == "abc123"
