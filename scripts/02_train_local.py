@@ -45,6 +45,11 @@ def main() -> None:
         default=-1,
         help="Override num_train_epochs; -1 = use the config value.",
     )
+    ap.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from the latest checkpoint in output_dir (for long runs).",
+    )
     args = ap.parse_args()
 
     with open(args.config, encoding="utf-8") as fh:
@@ -122,7 +127,7 @@ def main() -> None:
         peft_config=peft_config,
         args=sft_args,
     )
-    trainer.train()
+    trainer.train(resume_from_checkpoint=args.resume or None)
     trainer.save_model(args.out)
     tokenizer.save_pretrained(args.out)
     print(json.dumps({"adapter": args.out, "base_model": cfg["base_model"]}))

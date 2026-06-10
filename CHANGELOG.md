@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `configs/train-4b.yaml` batch sizing tuned for a 12GB GPU (per-device 2 × grad-accum 8; effective batch 16 unchanged).
 - `scripts/02_train.py` (HF Jobs / Unsloth path) updated for TRL 0.24 (`max_length`, `processing_class`) and auto bf16/fp16 by GPU capability.
+- `nebula/hf_classifier.py` loads the eval model in 4-bit NF4 + fp16 so both base and tuned 4B models fit a 12GB GPU and match the shipped Q4 GGUF. Adds `--resume` to `02_train_local.py` for long local runs.
 
 ### Added (CI / Pipeline)
 - `release.yml` gains a `stop_before_publish` dispatch input and `run_pipeline.sh` honors `STOP_BEFORE_PUBLISH=true` to run train → merge → quantize → eval as a **dry run** that prints the eval report to the job logs and skips the public Hub publish. Lets the first real GPU run be validated before committing a public `v0.1`.

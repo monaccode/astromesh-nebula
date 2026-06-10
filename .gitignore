@@ -6,6 +6,8 @@ __pycache__/
 # local WSL training scratch
 unsloth_compiled_cache/
 *.err
+# cloned external build tree for GGUF conversion
+/llama.cpp/
 /data/*/raw/
 /data/*/processed/
 # generated dataset artifacts (the recipe is in code; data is derived)
