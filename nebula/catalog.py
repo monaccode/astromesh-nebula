@@ -7,8 +7,11 @@ runtime (Astromesh). Source YAML is human-editable; the compiled lock
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass
+from pathlib import Path
 
+import jsonschema
 import yaml
 
 
@@ -121,3 +124,12 @@ def compile_catalog(
         )
 
     return {"schema_version": "1", "models": out_models}
+
+
+_SCHEMA_PATH = Path(__file__).with_name("catalog.schema.json")
+
+
+def validate_lock(lock: dict) -> None:
+    """Validate a compiled lock dict against the versioned JSON Schema."""
+    schema = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
+    jsonschema.validate(instance=lock, schema=schema)

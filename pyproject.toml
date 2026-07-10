@@ -9,6 +9,7 @@ dependencies = [
     "datasets>=2.19",
     "huggingface_hub>=0.24",
     "pyyaml>=6.0",
+    "jsonschema>=4.0",
 ]
 
 [project.optional-dependencies]
@@ -22,6 +23,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nebula"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"nebula/catalog.schema.json" = "nebula/catalog.schema.json"
 
 [tool.ruff]
 line-length = 100
