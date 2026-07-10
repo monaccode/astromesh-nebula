@@ -58,7 +58,7 @@ class ModelEntry:
 
 def _read_yaml(path: str) -> dict:
     with open(path, encoding="utf-8") as fh:
-        return yaml.safe_load(fh)
+        return yaml.safe_load(fh) or {}
 
 
 def load_catalog(
