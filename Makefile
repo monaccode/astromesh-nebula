@@ -1,7 +1,7 @@
 SIZE ?= 4b
 DATASET ?= NickyNicky/Finance_sentiment_and_topic_classification_Translation_English_to_Spanish_v1
 
-.PHONY: test lint dataset train eval quantize merge publish space
+.PHONY: test lint dataset train eval quantize merge publish space catalog
 
 test:
 	uv run pytest -v
@@ -31,3 +31,7 @@ publish:
 
 space:
 	uv run python scripts/08_deploy_space.py --repo $(HF_ORG)/centinela-$(SIZE)-demo
+
+catalog:
+	uv run python scripts/09_catalog.py compile \
+		--models catalog/centinela.yaml --datasets catalog/datasets.yaml --out catalog.lock.json
