@@ -10,6 +10,7 @@
       "items": {
         "type": "object",
         "required": ["name", "kind", "task", "vertical", "hf_repo", "contract", "aliases", "revisions"],
+        "additionalProperties": false,
         "properties": {
           "name": { "type": "string" },
           "kind": { "type": "string", "enum": ["classifier", "extractor", "instruct"] },
@@ -26,6 +27,7 @@
             "additionalProperties": {
               "type": "object",
               "required": ["version", "sha", "eval", "gate", "formats", "dataset", "train_config_hash", "base_model"],
+              "additionalProperties": false,
               "properties": {
                 "version": { "type": "string" },
                 "sha": { "type": "string" },
