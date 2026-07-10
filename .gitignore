@@ -21,3 +21,5 @@ unsloth_compiled_cache/
 .pytest_cache/
 .ruff_cache/
 pytest_output.txt
+# Generated catalog lock (compiled from catalog/*.yaml)
+/catalog.lock.json
