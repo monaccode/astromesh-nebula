@@ -7,7 +7,7 @@ runtime (Astromesh). Source YAML is human-editable; the compiled lock
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 import yaml
 
@@ -73,3 +73,51 @@ def load_catalog(
         model = ModelEntry(revisions=revisions, **raw)
         models[model.name] = model
     return models, datasets
+
+
+def compile_catalog(
+    models: dict[str, ModelEntry], datasets: dict[str, DatasetEntry]
+) -> dict:
+    """Validate the catalog invariants and emit the deterministic lock dict."""
+    out_models = []
+    for name in sorted(models):
+        model = models[name]
+
+        for alias, version in model.aliases.items():
+            rev = model.revisions.get(version)
+            if rev is None:
+                raise CatalogError(
+                    f"{name}: alias '{alias}' points to missing revision '{version}'"
+                )
+            if rev.gate != "passed":
+                raise CatalogError(
+                    f"{name}: alias '{alias}' -> '{version}' has gate '{rev.gate}', "
+                    "only gate 'passed' may be aliased"
+                )
+
+        for version, rev in model.revisions.items():
+            ds = datasets.get(rev.dataset)
+            if ds is None:
+                raise CatalogError(
+                    f"{name}:{version}: references unknown dataset '{rev.dataset}'"
+                )
+            if ds.contract != model.contract:
+                raise CatalogError(
+                    f"{name}:{version}: dataset '{rev.dataset}' contract does not "
+                    f"match model contract"
+                )
+
+        out_models.append(
+            {
+                "name": model.name,
+                "kind": model.kind,
+                "task": model.task,
+                "vertical": model.vertical,
+                "hf_repo": model.hf_repo,
+                "contract": model.contract,
+                "aliases": dict(sorted(model.aliases.items())),
+                "revisions": {v: asdict(model.revisions[v]) for v in sorted(model.revisions)},
+            }
+        )
+
+    return {"schema_version": "1", "models": out_models}
