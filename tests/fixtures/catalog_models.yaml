@@ -1,0 +1,22 @@
+models:
+  - name: centinela-sentiment
+    kind: classifier
+    task: text-classification
+    vertical: finanzas
+    hf_repo: astromesh/Centinela-Qwen3-4B
+    contract:
+      labels: [positivo, neutral, negativo]
+      validation: constrain_label
+    aliases:
+      prod: v0.1
+    revisions:
+      - version: v0.1
+        sha: abc123
+        gate: passed
+        base_model: Qwen/Qwen3-4B
+        dataset: centinela-sentiment-es@3
+        train_config_hash: sha256:deadbeef
+        formats: [safetensors, gguf]
+        eval:
+          macro_f1: 0.87
+          invalid_rate: 0.01

@@ -1,0 +1,11 @@
+datasets:
+  - id: centinela-sentiment-es@3
+    vertical: finanzas
+    task: text-classification
+    kind: classifier
+    language: es
+    size: 4840
+    hash: sha256:aaa
+    contract:
+      labels: [positivo, neutral, negativo]
+      validation: constrain_label
