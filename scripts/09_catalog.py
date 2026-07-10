@@ -6,19 +6,8 @@
 """
 
 import argparse
-import json
 
-from nebula.catalog import compile_catalog, load_catalog, validate_lock
-
-
-def compile_to_file(models_path: str, datasets_path: str, out_path: str) -> dict:
-    models, datasets = load_catalog(models_path, datasets_path)
-    lock = compile_catalog(models, datasets)
-    validate_lock(lock)
-    text = json.dumps(lock, sort_keys=True, ensure_ascii=False, indent=2)
-    with open(out_path, "w", encoding="utf-8") as fh:
-        fh.write(text + "\n")
-    return lock
+from nebula.catalog import compile_to_file
 
 
 def main() -> None:

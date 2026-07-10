@@ -207,7 +207,6 @@ name = "astromesh-nebula"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "datasets" },
     { name = "huggingface-hub" },
     { name = "jsonschema" },
     { name = "pyyaml" },
@@ -219,11 +218,13 @@ demo = [
     { name = "llama-cpp-python" },
 ]
 dev = [
+    { name = "datasets" },
     { name = "pytest" },
     { name = "ruff" },
 ]
 eval = [
     { name = "accelerate" },
+    { name = "datasets" },
     { name = "torch" },
     { name = "transformers" },
 ]
@@ -231,7 +232,8 @@ eval = [
 [package.metadata]
 requires-dist = [
     { name = "accelerate", marker = "extra == 'eval'", specifier = ">=0.33" },
-    { name = "datasets", specifier = ">=2.19" },
+    { name = "datasets", marker = "extra == 'dev'", specifier = ">=2.19" },
+    { name = "datasets", marker = "extra == 'eval'", specifier = ">=2.19" },
     { name = "gradio", marker = "extra == 'demo'", specifier = ">=4.0" },
     { name = "huggingface-hub", specifier = ">=0.24" },
     { name = "jsonschema", specifier = ">=4.0" },

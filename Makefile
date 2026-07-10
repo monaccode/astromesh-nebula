@@ -4,7 +4,7 @@ TASK ?= text-classification
 VERTICAL ?= finanzas
 MAXB ?= 8
 
-.PHONY: test lint dataset train eval quantize merge publish space catalog scout
+.PHONY: test lint dataset train eval quantize merge publish space catalog scout lock
 
 test:
 	uv run pytest -v
@@ -42,3 +42,8 @@ space:
 catalog:
 	uv run python scripts/09_catalog.py compile \
 		--models catalog/centinela.yaml --datasets catalog/datasets.yaml --out catalog.lock.json
+
+lock:  ## Compile the catalog lock shipped inside the wheel
+	uv run python scripts/09_catalog.py compile \
+		--models catalog/centinela.yaml --datasets catalog/datasets.yaml \
+		--out nebula/catalog.lock.json
