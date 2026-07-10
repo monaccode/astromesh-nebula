@@ -1,13 +1,20 @@
 SIZE ?= 4b
 DATASET ?= NickyNicky/Finance_sentiment_and_topic_classification_Translation_English_to_Spanish_v1
+TASK ?= text-classification
+VERTICAL ?= finanzas
+MAXB ?= 8
 
-.PHONY: test lint dataset train eval quantize merge publish space catalog
+.PHONY: test lint dataset train eval quantize merge publish space catalog scout
 
 test:
 	uv run pytest -v
 
 lint:
 	uv run ruff check nebula/ tests/ scripts/
+
+scout:
+	uv run python scripts/00_scout.py --task $(TASK) --vertical $(VERTICAL) \
+		--language es --max-params-b $(MAXB) --top 5
 
 dataset:
 	uv run python scripts/01_build_dataset.py --dataset $(DATASET) --out data/centinela
