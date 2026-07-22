@@ -1,14 +1,15 @@
 name: preflight
 # Manual only — verifies the Hugging Face credentials WITHOUT spending GPU credit.
 #
-# Why this exists: the `release` workflow submits a billed HF Job as its very first
-# real action. Its only run so far (2026-06-09) died at `hf auth login` with
-# "Invalid user token" — a free 17s failure. But the opposite outcome is expensive:
-# if auth succeeds, `release` immediately launches a full training Job. So there was
-# no cheap way to answer "are the credentials actually good?" before committing to a
-# ~2h billed run. This workflow answers it on a free ubuntu runner in ~30s.
+# Why this exists: the `release` workflow submits a billed GPU Job as its very first
+# real action. Its first run (2026-06-09) died at `hf auth login` with "Invalid user
+# token" — a free 17s failure. But the opposite outcome is expensive: if auth succeeds,
+# `release` immediately launches a full training Job. So there was no cheap way to
+# answer "are the credentials actually good?" before committing to a billed run.
 #
-# It never calls `hf jobs run`; it only READS (`whoami-v2`, `hf jobs ls`).
+# It DOES launch one job, on cpu-basic ($0.0002/min), because that is the only way to
+# prove the `job.write` permission — see the launch step for why listing is not enough.
+# It never touches GPU hardware.
 on:
   workflow_dispatch:
 
@@ -102,22 +103,42 @@ jobs:
               ;;
           esac
 
-      - name: Check that HF Jobs is available to this account
+      - name: Prove the token can actually LAUNCH a job
         run: |
           set -uo pipefail
 
-          # Read-only probe: lists existing Jobs in the namespace. It never launches one,
-          # so it costs nothing, but it fails the same way `hf jobs run` would if the
-          # account has no plan that includes Jobs.
-          if output=$(hf jobs ls --namespace "$HF_ORG" 2>&1); then
-            echo "HF Jobs reachable for namespace '$HF_ORG'."
+          # This launches a real Job — deliberately. An earlier version of this step only
+          # ran `hf jobs ls`, which is a READ: it succeeds without the `job.write`
+          # permission and so reported "Jobs available" for a token that could not launch
+          # anything. The release run then 403'd on `hf jobs run`. Listing cannot answer
+          # "may we launch?"; only launching can.
+          #
+          # cpu-basic costs $0.0002/min, so this proof costs a fraction of a cent — while
+          # the failure it prevents is a GPU run that dies after being billed.
+          # --namespace is what the release workflow uses, so the same permission and the
+          # same billing account are exercised here.
+          if output=$(hf jobs run \
+              --namespace "$HF_ORG" \
+              --flavor cpu-basic \
+              --timeout 5m \
+              python:3.11 echo "preflight-ok" 2>&1); then
             echo "$output"
-            echo "| HF Jobs access | ✅ available |" >> "$GITHUB_STEP_SUMMARY"
+            echo "Job launched and completed under namespace '$HF_ORG'."
+            echo "| Can launch jobs (job.write) | ✅ yes |" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "$output"
-            echo "| HF Jobs access | ❌ unavailable |" >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::Could not list Jobs for '$HF_ORG' (see output above). HF Jobs \
-          requires a paid plan; without it the release workflow cannot train on GPU."
+            echo "| Can launch jobs (job.write) | ❌ no |" >> "$GITHUB_STEP_SUMMARY"
+            case "$output" in
+              *job.write*)
+                echo "::error::The token lacks the 'job.write' permission on '$HF_ORG'. \
+          Edit it at https://huggingface.co/settings/tokens and grant permission to manage \
+          Jobs for that org, or use a classic write token belonging to a member."
+                ;;
+              *)
+                echo "::error::Could not launch a job in '$HF_ORG' (see output above). \
+          Jobs are billed, so this can also mean the account has no plan that includes them."
+                ;;
+            esac
             exit 1
           fi
 
