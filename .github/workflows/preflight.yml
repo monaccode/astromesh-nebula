@@ -1,0 +1,125 @@
+name: preflight
+# Manual only — verifies the Hugging Face credentials WITHOUT spending GPU credit.
+#
+# Why this exists: the `release` workflow submits a billed HF Job as its very first
+# real action. Its only run so far (2026-06-09) died at `hf auth login` with
+# "Invalid user token" — a free 17s failure. But the opposite outcome is expensive:
+# if auth succeeds, `release` immediately launches a full training Job. So there was
+# no cheap way to answer "are the credentials actually good?" before committing to a
+# ~2h billed run. This workflow answers it on a free ubuntu runner in ~30s.
+#
+# It never calls `hf jobs run`; it only READS (`whoami-v2`, `hf jobs ls`).
+on:
+  workflow_dispatch:
+
+jobs:
+  check-credentials:
+    runs-on: ubuntu-latest
+    env:
+      # The CLI and the API both pick HF_TOKEN up from the environment, so the token
+      # is never passed as a command-line argument (which would land in the logs).
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_ORG: ${{ vars.HF_ORG }}
+    steps:
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install Hugging Face CLI
+        # No `[cli]` extra: huggingface_hub >=1.x ships the `hf` executable in the base
+        # package, and asking for the extra only emits a "does not have an extra named
+        # cli" warning.
+        run: uv tool install huggingface_hub
+
+      - name: Check that HF_ORG is configured
+        run: |
+          if [ -z "${HF_ORG:-}" ]; then
+            echo "::error::vars.HF_ORG is not set. Set it with: gh variable set HF_ORG"
+            exit 1
+          fi
+          echo "HF_ORG=$HF_ORG"
+
+      - name: Validate token, org membership and write access
+        id: whoami
+        run: |
+          set -uo pipefail
+
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "::error::secrets.HF_TOKEN is empty. Set it with: gh secret set HF_TOKEN"
+            exit 1
+          fi
+
+          # -w appends the HTTP status on its own line so we can branch on it.
+          response=$(curl -sS -w '\n%{http_code}' \
+            -H "Authorization: Bearer $HF_TOKEN" \
+            https://huggingface.co/api/whoami-v2)
+          status=$(printf '%s' "$response" | tail -n1)
+          body=$(printf '%s' "$response" | sed '$d')
+
+          if [ "$status" != "200" ]; then
+            echo "::error::HF rejected the token (HTTP $status). Mint a fresh one at \
+          https://huggingface.co/settings/tokens with write access to '$HF_ORG', then: gh secret set HF_TOKEN"
+            exit 1
+          fi
+
+          # Only selected fields are echoed — the payload also carries the account email.
+          user=$(jq -r '.name // "?"' <<<"$body")
+          kind=$(jq -r '.type // "?"' <<<"$body")
+          token_role=$(jq -r '.auth.accessToken.role // "unknown"' <<<"$body")
+          org_role=$(jq -r --arg org "$HF_ORG" \
+            '(.orgs[]? | select(.name == $org) | .roleInOrg) // empty' <<<"$body")
+
+          echo "token valid  -> user=$user type=$kind"
+          echo "token role   -> $token_role"
+          echo "role in $HF_ORG -> ${org_role:-<not a member>}"
+          {
+            echo "### Hugging Face preflight"
+            echo ""
+            echo "| Check | Result |"
+            echo "|---|---|"
+            echo "| Token valid | ✅ \`$user\` ($kind) |"
+            echo "| Token role | \`$token_role\` |"
+            echo "| Role in \`$HF_ORG\` | \`${org_role:-not a member}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -z "$org_role" ]; then
+            echo "::error::This token's account is not a member of the '$HF_ORG' org, so the \
+          pipeline cannot push the model. Join the org or use a token that belongs to it."
+            exit 1
+          fi
+
+          case "$token_role" in
+            write|admin)
+              ;;
+            fineGrained)
+              # Fine-grained tokens carry per-repo scopes that whoami-v2 does not expand,
+              # so write access can only be proven by actually pushing. Warn, don't block.
+              echo "::warning::Fine-grained token — its scopes cannot be verified here. \
+          Confirm it grants write access to '$HF_ORG' or the publish step will fail."
+              ;;
+            *)
+              echo "::error::Token role is '$token_role'; the pipeline needs a write token \
+          to publish the model to '$HF_ORG'."
+              exit 1
+              ;;
+          esac
+
+      - name: Check that HF Jobs is available to this account
+        run: |
+          set -uo pipefail
+
+          # Read-only probe: lists existing Jobs in the namespace. It never launches one,
+          # so it costs nothing, but it fails the same way `hf jobs run` would if the
+          # account has no plan that includes Jobs.
+          if output=$(hf jobs ls --namespace "$HF_ORG" 2>&1); then
+            echo "HF Jobs reachable for namespace '$HF_ORG'."
+            echo "$output"
+            echo "| HF Jobs access | ✅ available |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "$output"
+            echo "| HF Jobs access | ❌ unavailable |" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::Could not list Jobs for '$HF_ORG' (see output above). HF Jobs \
+          requires a paid plan; without it the release workflow cannot train on GPU."
+            exit 1
+          fi
+
+      - name: Preflight passed
+        run: echo "::notice::Credentials OK — the release workflow can reach HF Jobs."
