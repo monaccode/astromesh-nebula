@@ -47,12 +47,16 @@ jobs:
           INPUT_TIMEOUT: ${{ inputs.timeout }}
           INPUT_STOP_BEFORE_PUBLISH: ${{ inputs.stop_before_publish }}
           INPUT_MAX_STEPS: ${{ inputs.max_steps }}
+        # --namespace is required: without it the Job runs under the token owner's
+        # PERSONAL namespace, which 403s on an org-scoped token and bills the wrong
+        # account. HF_ORG alone only tells the job where to publish, not where to run.
         # Flags verified against `hf jobs run --help` (huggingface_hub 1.14.0).
         # Runs attached (no --detach) so this step waits and fails if the eval gate fails.
         # on first use (the CLI evolves). This launches a python:3.11 job that clones
         # the private repo with GH_PIPELINE_TOKEN and runs scripts/run_pipeline.sh.
         run: |
           hf jobs run \
+            --namespace "$HF_ORG" \
             --flavor "$INPUT_FLAVOR" \
             --timeout "$INPUT_TIMEOUT" \
             -s HF_TOKEN="$HF_TOKEN" \

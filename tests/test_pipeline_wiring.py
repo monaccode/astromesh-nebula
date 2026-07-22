@@ -122,6 +122,22 @@ def test_run_pipeline_smoke_mode_limits_eval_and_never_publishes():
     assert "06_push_to_hub.py" not in smoke.split("exit 0")[0]
 
 
+def test_release_workflow_runs_jobs_in_the_org_namespace():
+    # Without --namespace, `hf jobs run` uses the token owner's personal namespace,
+    # which both fails on an org-scoped token and bills the wrong account.
+    text = Path(".github/workflows/release.yml").read_text(encoding="utf-8")
+    assert "--namespace" in text
+
+
+def test_preflight_launches_a_real_job_to_prove_write_permission():
+    # `hf jobs ls` is a READ and succeeds without job.write, so listing alone cannot
+    # tell us whether the pipeline may launch. Only an actual launch proves it.
+    text = Path(".github/workflows/preflight.yml").read_text(encoding="utf-8")
+    assert "hf jobs run" in text
+    assert "cpu-basic" in text
+    assert "--namespace" in text
+
+
 def test_eval_gate_runs_tests_and_lint():
     text = Path(".github/workflows/eval-gate.yml").read_text(encoding="utf-8")
     assert "pytest" in text and "ruff" in text
