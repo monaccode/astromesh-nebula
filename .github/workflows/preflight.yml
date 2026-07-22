@@ -121,5 +121,23 @@ jobs:
             exit 1
           fi
 
+      - name: Show available hardware and pricing
+        # Jobs are billed per minute on every flavor — there is no free GPU tier — so the
+        # flavor choice is a cost decision. Printing the live table keeps that decision
+        # based on current prices rather than on numbers remembered from a doc.
+        run: |
+          set -uo pipefail
+          echo "### HF Jobs hardware & pricing" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          if hardware=$(hf jobs hardware 2>&1); then
+            echo "$hardware"
+            echo "$hardware" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "$hardware"
+            echo "(unavailable: $hardware)" >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Could not list hardware flavors; pick a flavor from the docs."
+          fi
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Preflight passed
         run: echo "::notice::Credentials OK — the release workflow can reach HF Jobs."
