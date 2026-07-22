@@ -129,6 +129,13 @@ jobs:
             echo "$output"
             echo "| Can launch jobs (job.write) | ❌ no |" >> "$GITHUB_STEP_SUMMARY"
             case "$output" in
+              *402*|*credit*)
+                # Distinct from a permissions failure: the token is fine, the account
+                # simply has no pre-paid balance. Editing the token would not help.
+                echo "::error::HF Jobs rejected the launch for lack of pre-paid credit \
+          (HTTP 402), not for lack of permissions. Add credit to the '$HF_ORG' account at \
+          https://huggingface.co/settings/billing — the first Centinela run costs ~\$2."
+                ;;
               *job.write*)
                 echo "::error::The token lacks the 'job.write' permission on '$HF_ORG'. \
           Edit it at https://huggingface.co/settings/tokens and grant permission to manage \
