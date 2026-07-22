@@ -138,6 +138,13 @@ def test_preflight_launches_a_real_job_to_prove_write_permission():
     assert "--namespace" in text
 
 
+def test_preflight_names_insufficient_credit_as_its_own_failure():
+    # A 402 is not a permissions problem and must not be reported as one: the fix is
+    # adding pre-paid credit, not editing the token.
+    text = Path(".github/workflows/preflight.yml").read_text(encoding="utf-8")
+    assert "402" in text
+
+
 def test_eval_gate_runs_tests_and_lint():
     text = Path(".github/workflows/eval-gate.yml").read_text(encoding="utf-8")
     assert "pytest" in text and "ruff" in text
