@@ -1,13 +1,20 @@
 SIZE ?= 4b
 DATASET ?= NickyNicky/Finance_sentiment_and_topic_classification_Translation_English_to_Spanish_v1
+TASK ?= text-classification
+VERTICAL ?= finanzas
+MAXB ?= 8
 
-.PHONY: test lint dataset train eval quantize merge publish space
+.PHONY: test lint dataset train eval quantize merge publish space catalog scout lock
 
 test:
 	uv run pytest -v
 
 lint:
 	uv run ruff check nebula/ tests/ scripts/
+
+scout:
+	uv run python scripts/00_scout.py --task $(TASK) --vertical $(VERTICAL) \
+		--language es --max-params-b $(MAXB) --top 5
 
 dataset:
 	uv run python scripts/01_build_dataset.py --dataset $(DATASET) --out data/centinela
@@ -31,3 +38,12 @@ publish:
 
 space:
 	uv run python scripts/08_deploy_space.py --repo $(HF_ORG)/centinela-$(SIZE)-demo
+
+catalog:
+	uv run python scripts/09_catalog.py compile \
+		--models catalog/centinela.yaml --datasets catalog/datasets.yaml --out catalog.lock.json
+
+lock:  ## Compile the catalog lock shipped inside the wheel
+	uv run python scripts/09_catalog.py compile \
+		--models catalog/centinela.yaml --datasets catalog/datasets.yaml \
+		--out nebula/catalog.lock.json

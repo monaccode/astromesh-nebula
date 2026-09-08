@@ -10,7 +10,8 @@ lora:
 train:
   epochs: 2
   learning_rate: 0.0002
-  per_device_batch_size: 8
-  gradient_accumulation_steps: 2
+  # Sized for a 12GB GPU (RTX 2060). Effective batch = 2 x 8 = 16 (unchanged).
+  per_device_batch_size: 2
+  gradient_accumulation_steps: 8
   gradient_checkpointing: true
   seed: 42

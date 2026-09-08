@@ -1,7 +1,13 @@
 __pycache__/
 *.pyc
 .venv/
+.venv-wsl/
 .env
+# local WSL training scratch
+unsloth_compiled_cache/
+*.err
+# cloned external build tree for GGUF conversion
+/llama.cpp/
 /data/*/raw/
 /data/*/processed/
 # generated dataset artifacts (the recipe is in code; data is derived)
@@ -15,3 +21,5 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 pytest_output.txt
+# Generated catalog lock (compiled from catalog/*.yaml)
+/catalog.lock.json

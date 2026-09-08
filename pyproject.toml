@@ -6,15 +6,15 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = [
-    "datasets>=2.19",
     "huggingface_hub>=0.24",
     "pyyaml>=6.0",
+    "jsonschema>=4.0",
 ]
 
 [project.optional-dependencies]
-eval = ["transformers>=4.44", "torch>=2.3", "accelerate>=0.33"]
+eval = ["transformers>=4.44", "torch>=2.3", "accelerate>=0.33", "datasets>=2.19"]
 demo = ["gradio>=4.0", "llama-cpp-python>=0.2.80"]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+dev = ["pytest>=8.0", "ruff>=0.6", "datasets>=2.19"]
 
 [build-system]
 requires = ["hatchling"]
@@ -22,6 +22,10 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nebula"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"nebula/catalog.schema.json" = "nebula/catalog.schema.json"
+"nebula/catalog.lock.json" = "nebula/catalog.lock.json"
 
 [tool.ruff]
 line-length = 100

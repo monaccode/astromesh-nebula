@@ -42,12 +42,18 @@ def main() -> None:
     ap.add_argument("--config", default="configs/eval.yaml")
     ap.add_argument("--out", default="eval/results/results.md")
     ap.add_argument("--frontier", action="store_true", help="(disabled in v0.1)")
+    ap.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Score only the first N eval examples (smoke runs); default = all.",
+    )
     args = ap.parse_args()
 
     from nebula.hf_classifier import HFChatClassifier
 
     cfg = load_eval_config(args.config)
-    examples = load_examples(args.eval)
+    examples = load_examples(args.eval, limit=args.limit)
 
     base_res = evaluate_classifier(HFChatClassifier(args.base), examples, LABELS)
     tuned_res = evaluate_classifier(HFChatClassifier(args.tuned), examples, LABELS)
