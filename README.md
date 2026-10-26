@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Astromesh Nebula" width="640">
+</p>
+
 <div align="center">
 
 # Astromesh Nebula
